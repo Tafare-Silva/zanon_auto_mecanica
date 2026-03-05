@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold text-gray-800">OS #{{ os.numero }}</h1>
+        <div class="space-x-3">
+            <a href="{% url 'os_imprimir' os.pk %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"><i class="fas fa-print mr-2"></i>Imprimir</a>
+            <a href="{% url 'os_editar' os.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"><i class="fas fa-edit mr-2"></i>Editar</a>
+        </div>
+    </div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Cliente</h2>
+            <p class="mb-2"><strong>Nome:</strong> {{ os.cliente.nome }}</p>
+            <p class="mb-2"><strong>Telefone:</strong> {{ os.cliente.telefone }}</p>
+            {% if os.cliente.email %}<p><strong>Email:</strong> {{ os.cliente.email }}</p>{% endif %}
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Veículo</h2>
+            <p class="mb-2"><strong>Veículo:</strong> {{ os.veiculo|default:"-" }}</p>
+            <p class="mb-2"><strong>Placa:</strong> {{ os.placa|default:"-" }}</p>
+            <p><strong>KM:</strong> {{ os.km|default:"-" }}</p>
+        </div>
+        {% if servicos %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Serviços</h2>
+            {% for servico in servicos %}
+            <div class="flex justify-between py-2 border-b"><span>{{ servico.descricao }}</span><span class="font-bold">R$ {{ servico.valor|floatformat:2 }}</span></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if produtos %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold mb-4">Produtos</h2>
+            {% for produto in produtos %}
+            <div class="flex justify-between py-2 border-b"><span>{{ produto.descricao }} ({{ produto.quantidade }}x)</span><span class="font-bold">R$ {{ produto.valor_total|floatformat:2 }}</span></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="space-y-6">
+        <div class="bg-blue-600 text-white rounded-lg p-6 shadow-md">
+            <p class="text-sm mb-2">Valor Total</p>
+            <p class="text-4xl font-bold">R$ {{ os.valor_total|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <p class="mb-3"><strong>Status:</strong> <span class="px-3 py-1 rounded-full text-sm {% if os.status == 'ABERTA' %}bg-yellow-100 text-yellow-800{% elif os.status == 'FINALIZADA' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">{{ os.get_status_display }}</span></p>
+            <p class="mb-3"><strong>Pagamento:</strong> {{ os.get_tipo_pagamento_display }}</p>
+            <p><strong>Data:</strong> {{ os.data_abertura|date:"d/m/Y H:i" }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Ordens de Serviço - Oficina Mecânica{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Ordens de Serviço</h1>
+        <p class="text-gray-600">Gerenciar ordens de serviço</p>
+    </div>
+    <a href="{% url 'os_criar' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
+        <i class="fas fa-plus mr-2"></i>Nova OS
+    </a>
+</div>
+
+<!-- Filtros de Pesquisa -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-filter mr-2 text-blue-600"></i>
+        Filtros de Pesquisa
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Busca por número ou cliente -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Buscar OS ou Cliente</label>
+            <input type="text" id="searchInput" placeholder="Número da OS ou nome do cliente..." 
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+        
+        <!-- Filtro por Status -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Todos os Status</option>
+                <option value="ABERTA">Aberta</option>
+                <option value="EM_ANDAMENTO">Em Andamento</option>
+                <option value="FINALIZADA">Finalizada</option>
+                <option value="CANCELADA">Cancelada</option>
+            </select>
+        </div>
+        
+        <!-- Filtro por Tipo de Pagamento -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pagamento</label>
+            <select id="pagamentoFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">Todos</option>
+                <option value="DINHEIRO">Dinheiro</option>
+                <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                <option value="PIX">PIX</option>
+                <option value="CREDIARIO">Crediário</option>
+            </select>
+        </div>
+        
+        <!-- Botão Limpar -->
+        <div class="flex items-end">
+            <button onclick="limparFiltros()" class="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition">
+                <i class="fas fa-eraser mr-2"></i>Limpar Filtros
+            </button>
+        </div>
+    </div>
+    
+    <!-- Contador de resultados -->
+    <div class="mt-4 text-sm text-gray-600">
+        <span id="resultCount"></span>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full" id="osTable">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">OS</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Veículo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for os in ordens %}
+                <tr class="hover:bg-gray-50 transition os-row" 
+                    data-numero="{{ os.numero }}"
+                    data-cliente="{{ os.cliente.nome|lower }}"
+                    data-status="{{ os.status }}"
+                    data-pagamento="{{ os.tipo_pagamento }}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">#{{ os.numero }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.cliente.nome }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.veiculo|default:"-" }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if os.status == 'ABERTA' %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Aberta</span>
+                        {% elif os.status == 'EM_ANDAMENTO' %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Em Andamento</span>
+                        {% elif os.status == 'FINALIZADA' %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Finalizada</span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Cancelada</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">R$ {{ os.valor_total|floatformat:2 }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.data_abertura|date:"d/m/Y" }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right space-x-3">
+                        <a href="{% url 'os_detalhe' os.pk %}" class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'os_editar' os.pk %}" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'os_imprimir' os.pk %}" target="_blank" class="text-purple-600 hover:text-purple-900">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        <a href="{% url 'os_deletar' os.pk %}" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr id="noResults">
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-clipboard-list text-4xl mb-2"></i>
+                        <p>Nenhuma ordem de serviço cadastrada</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function aplicarFiltros() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const pagamentoFilter = document.getElementById('pagamentoFilter').value;
+    
+    const rows = document.querySelectorAll('.os-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const numero = row.dataset.numero.toLowerCase();
+        const cliente = row.dataset.cliente;
+        const status = row.dataset.status;
+        const pagamento = row.dataset.pagamento;
+        
+        // Verificar busca por texto
+        const matchSearch = searchTerm === '' || numero.includes(searchTerm) || cliente.includes(searchTerm);
+        
+        // Verificar filtro de status
+        const matchStatus = statusFilter === '' || status === statusFilter;
+        
+        // Verificar filtro de pagamento
+        const matchPagamento = pagamentoFilter === '' || pagamento === pagamentoFilter;
+        
+        // Mostrar ou esconder linha
+        if (matchSearch && matchStatus && matchPagamento) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Atualizar contador
+    const total = rows.length;
+    document.getElementById('resultCount').textContent = 
+        `Mostrando ${visibleCount} de ${total} ordem${total !== 1 ? 'ns' : ''} de serviço`;
+}
+
+function limparFiltros() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('pagamentoFilter').value = '';
+    aplicarFiltros();
+}
+
+// Event listeners
+document.getElementById('searchInput').addEventListener('input', aplicarFiltros);
+document.getElementById('statusFilter').addEventListener('change', aplicarFiltros);
+document.getElementById('pagamentoFilter').addEventListener('change', aplicarFiltros);
+
+// Inicializar contador
+window.addEventListener('load', aplicarFiltros);
+</script>
+{% endblock %}

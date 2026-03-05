@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Editar OS #{{ os.numero }} - Oficina Mecânica{% endblock %}
+{% block content %}
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Editar OS #{{ os.numero }}</h1>
+            <p class="text-gray-600">Cliente: {{ os.cliente.nome }}</p>
+        </div>
+        <div class="space-x-3">
+            <a href="{% url 'os_imprimir' os.pk %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition inline-block">
+                <i class="fas fa-print mr-2"></i>Imprimir
+            </a>
+            <a href="{% url 'os_detalhe' os.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition inline-block">
+                <i class="fas fa-eye mr-2"></i>Visualizar
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Informações da OS -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-info-circle mr-3 text-blue-500"></i>
+        Informações da Ordem de Serviço
+    </h2>
+    
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                {{ form.cliente }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Veículo</label>
+                {{ form.veiculo }}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Placa</label>
+                {{ form.placa }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">KM</label>
+                {{ form.km }}
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Defeito Reclamado</label>
+            {{ form.defeito_reclamado }}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+            {{ form.observacoes }}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                {{ form.status }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Pagamento *</label>
+                {{ form.tipo_pagamento }}
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-6 border-t">
+            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-save mr-2"></i>Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Serviços -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-tools mr-3 text-green-500"></i>
+        Serviços
+    </h2>
+
+    <!-- Formulário Inline para Adicionar Serviço -->
+    <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 mb-4">
+        <form method="post" action="{% url 'servico_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
+            {% csrf_token %}
+            <div class="col-span-9">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Serviço</label>
+                <input type="text" name="descricao" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Digite a descrição do serviço..." required>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Valor (R$)</label>
+                <input type="number" name="valor" step="0.01" min="0" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="0,00" required>
+            </div>
+            <div class="col-span-1">
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Serviços -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for servico in servicos %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">{{ servico.descricao }}</td>
+                    <td class="px-6 py-4 text-right font-medium">R$ {{ servico.valor|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <form method="post" action="{% url 'servico_deletar' servico.pk %}" class="inline" onsubmit="return confirm('Remover este serviço?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">Nenhum serviço adicionado</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Produtos -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-box mr-3 text-purple-500"></i>
+        Produtos
+    </h2>
+
+    <!-- Formulário Inline para Adicionar Produto -->
+    <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-3 mb-4">
+        <form method="post" action="{% url 'produto_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
+            {% csrf_token %}
+            <div class="col-span-7">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Produto</label>
+                <input type="text" name="descricao" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Digite a descrição do produto..." required>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Quantidade</label>
+                <input type="number" name="quantidade" step="0.01" min="0.01" value="1" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Valor Unit. (R$)</label>
+                <input type="number" name="valor_unitario" step="0.01" min="0" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="0,00" required>
+            </div>
+            <div class="col-span-1">
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Produtos -->
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor Unit.</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for produto in produtos %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">{{ produto.descricao }}</td>
+                    <td class="px-6 py-4 text-right">{{ produto.quantidade }}</td>
+                    <td class="px-6 py-4 text-right">R$ {{ produto.valor_unitario|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-right font-medium">R$ {{ produto.valor_total|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <form method="post" action="{% url 'produto_deletar' produto.pk %}" class="inline" onsubmit="return confirm('Remover este produto?');">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum produto adicionado</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Total -->
+<div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-md p-8">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold">Valor Total da OS</h2>
+        <p class="text-4xl font-bold">R$ {{ os.valor_total|floatformat:2 }}</p>
+    </div>
+</div>
+{% endblock %}

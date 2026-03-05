@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }} - Oficina Mecânica{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ titulo }}</h1>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" id="osForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Cliente com botão de adicionar -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                <div class="flex gap-2">
+                    {{ form.cliente }}
+                    <button type="button" onclick="openClienteModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+                        <i class="fas fa-user-plus mr-2"></i>Novo
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Veículo</label>{{ form.veiculo }}</div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Placa</label>{{ form.placa }}</div>
+            </div>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">KM</label>{{ form.km }}</div>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Defeito Reclamado</label>{{ form.defeito_reclamado }}</div>
+            <div><label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>{{ form.observacoes }}</div>
+            <div class="grid grid-cols-2 gap-6">
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>{{ form.status }}</div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Pagamento *</label>{{ form.tipo_pagamento }}</div>
+            </div>
+            
+            <div class="flex justify-end space-x-4 pt-6 border-t">
+                <a href="{% url 'os_lista' %}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Cancelar</a>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"><i class="fas fa-save mr-2"></i>Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Cadastrar Cliente -->
+<div id="clienteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Novo Cliente</h3>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+                <input type="text" id="modal_nome" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">CPF/CNPJ</label>
+                <input type="text" id="modal_cpf_cnpj" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
+                <input type="text" id="modal_telefone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" id="modal_email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+                <textarea id="modal_endereco" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button type="button" onclick="closeClienteModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancelar</button>
+            <button type="button" onclick="salvarCliente()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>Salvar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openClienteModal() {
+    document.getElementById('clienteModal').classList.remove('hidden');
+}
+
+function closeClienteModal() {
+    document.getElementById('clienteModal').classList.add('hidden');
+    // Limpar campos
+    document.getElementById('modal_nome').value = '';
+    document.getElementById('modal_cpf_cnpj').value = '';
+    document.getElementById('modal_telefone').value = '';
+    document.getElementById('modal_email').value = '';
+    document.getElementById('modal_endereco').value = '';
+}
+
+async function salvarCliente() {
+    const nome = document.getElementById('modal_nome').value;
+    const telefone = document.getElementById('modal_telefone').value;
+    
+    if (!nome || !telefone) {
+        alert('Nome e Telefone são obrigatórios!');
+        return;
+    }
+    
+    const data = {
+        nome: nome,
+        cpf_cnpj: document.getElementById('modal_cpf_cnpj').value,
+        telefone: telefone,
+        email: document.getElementById('modal_email').value,
+        endereco: document.getElementById('modal_endereco').value
+    };
+    
+    try {
+        const response = await fetch('{% url "cliente_criar_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Adicionar nova opção no select
+            const select = document.getElementById('id_cliente');
+            const option = new Option(result.cliente_nome, result.cliente_id, true, true);
+            select.add(option);
+            
+            closeClienteModal();
+            
+            // Mostrar mensagem de sucesso
+            const msg = document.createElement('div');
+            msg.className = 'bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-4';
+            msg.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Cliente cadastrado com sucesso!';
+            document.querySelector('.max-w-6xl').insertBefore(msg, document.querySelector('.bg-white'));
+            setTimeout(() => msg.remove(), 3000);
+        } else {
+            alert('Erro ao cadastrar cliente: ' + result.error);
+        }
+    } catch (error) {
+        alert('Erro ao cadastrar cliente. Tente novamente.');
+        console.error('Erro:', error);
+    }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('clienteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeClienteModal();
+    }
+});
+</script>
+{% endblock %}

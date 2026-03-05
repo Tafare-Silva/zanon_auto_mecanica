@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Oficina Mecânica{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h1>
+    <p class="text-gray-600">Visão geral do sistema</p>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Total de Clientes -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm mb-1">Total de Clientes</p>
+                <p class="text-3xl font-bold text-gray-800">{{ total_clientes }}</p>
+            </div>
+            <div class="bg-blue-100 rounded-full p-4">
+                <i class="fas fa-users text-blue-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- OS Abertas -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm mb-1">OS Abertas</p>
+                <p class="text-3xl font-bold text-gray-800">{{ os_abertas }}</p>
+            </div>
+            <div class="bg-yellow-100 rounded-full p-4">
+                <i class="fas fa-folder-open text-yellow-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- OS Em Andamento -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm mb-1">Em Andamento</p>
+                <p class="text-3xl font-bold text-gray-800">{{ os_em_andamento }}</p>
+            </div>
+            <div class="bg-green-100 rounded-full p-4">
+                <i class="fas fa-cog text-green-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Crediário -->
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm mb-1">Crediário Total</p>
+                <p class="text-3xl font-bold text-gray-800">R$ {{ total_crediario|floatformat:2 }}</p>
+            </div>
+            <div class="bg-red-100 rounded-full p-4">
+                <i class="fas fa-credit-card text-red-500 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <a href="{% url 'os_criar' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-6 hover:shadow-lg transition transform hover:-translate-y-1">
+        <div class="flex items-center space-x-4">
+            <i class="fas fa-plus-circle text-4xl"></i>
+            <div>
+                <p class="text-xl font-bold">Nova Ordem de Serviço</p>
+                <p class="text-sm opacity-90">Abrir uma nova OS</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'cliente_criar' %}" class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md p-6 hover:shadow-lg transition transform hover:-translate-y-1">
+        <div class="flex items-center space-x-4">
+            <i class="fas fa-user-plus text-4xl"></i>
+            <div>
+                <p class="text-xl font-bold">Cadastrar Cliente</p>
+                <p class="text-sm opacity-90">Adicionar novo cliente</p>
+            </div>
+        </div>
+    </a>
+
+    <a href="{% url 'crediario_lista' %}" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md p-6 hover:shadow-lg transition transform hover:-translate-y-1">
+        <div class="flex items-center space-x-4">
+            <i class="fas fa-money-bill-wave text-4xl"></i>
+            <div>
+                <p class="text-xl font-bold">Gerenciar Crediário</p>
+                <p class="text-sm opacity-90">Controlar pagamentos</p>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Últimas Ordens de Serviço -->
+<div class="bg-white rounded-lg shadow-md">
+    <div class="border-b border-gray-200 px-6 py-4">
+        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-clipboard-list mr-3 text-blue-500"></i>
+            Últimas Ordens de Serviço
+        </h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OS</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Veículo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for os in ultimas_os %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">#{{ os.numero }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.cliente.nome }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.veiculo|default:"-" }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if os.status == 'ABERTA' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Aberta
+                        </span>
+                        {% elif os.status == 'EM_ANDAMENTO' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                            Em Andamento
+                        </span>
+                        {% elif os.status == 'FINALIZADA' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Finalizada
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Cancelada
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">R$ {{ os.valor_total|floatformat:2 }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm text-gray-900">{{ os.data_abertura|date:"d/m/Y" }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'os_detalhe' os.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'os_editar' os.pk %}" class="text-green-600 hover:text-green-900">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-2"></i>
+                        <p>Nenhuma ordem de serviço cadastrada ainda</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
