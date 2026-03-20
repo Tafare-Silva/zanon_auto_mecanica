@@ -39,16 +39,10 @@ class ClienteForm(forms.ModelForm):
 class OrdemServicoForm(forms.ModelForm):
     class Meta:
         model = OrdemServico
-        fields = ['cliente', 'cliente_nome', 'veiculo', 'placa', 'km', 'defeito_reclamado', 'observacoes', 'status', 'tipo_pagamento']
+        fields = ['cliente', 'veiculo', 'placa', 'km', 'defeito_reclamado', 'observacoes', 'status', 'tipo_pagamento']
         widgets = {
             'cliente': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                'id': 'id_cliente',
-            }),
-            'cliente_nome': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                'placeholder': 'Ou digite o nome do cliente aqui...',
-                'id': 'id_cliente_nome',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
             'veiculo': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
@@ -79,17 +73,6 @@ class OrdemServicoForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
         }
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        cliente = cleaned_data.get('cliente')
-        cliente_nome = cleaned_data.get('cliente_nome')
-        
-        # Validar que pelo menos um dos dois foi preenchido
-        if not cliente and not cliente_nome:
-            raise forms.ValidationError('Você deve selecionar um cliente cadastrado OU digitar o nome do cliente.')
-        
-        return cleaned_data
 
 
 class ServicoOSForm(forms.ModelForm):

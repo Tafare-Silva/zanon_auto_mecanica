@@ -56,10 +56,7 @@ class OrdemServico(models.Model):
     ]
 
     numero = models.CharField('Número OS', max_length=20, unique=True)
-    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='ordens', 
-                                verbose_name='Cliente', null=True, blank=True)
-    cliente_nome = models.CharField('Nome do Cliente', max_length=200, blank=True,
-                                    help_text='Preencha se não selecionar um cliente cadastrado')
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='ordens', verbose_name='Cliente')
     veiculo = models.CharField('Veículo', max_length=200, blank=True)
     placa = models.CharField('Placa', max_length=20, blank=True)
     km = models.CharField('KM', max_length=20, blank=True)
@@ -84,14 +81,7 @@ class OrdemServico(models.Model):
         ordering = ['-data_abertura']
 
     def __str__(self):
-        cliente_display = self.get_cliente_nome()
-        return f"OS {self.numero} - {cliente_display}"
-    
-    def get_cliente_nome(self):
-        """Retorna nome do cliente cadastrado ou o nome digitado"""
-        if self.cliente:
-            return self.cliente.nome
-        return self.cliente_nome or "Cliente não informado"
+        return f"OS {self.numero} - {self.cliente.nome}"
 
     def calcular_total(self):
         """Calcula o valor total da OS baseado nos serviços e produtos"""

@@ -13,9 +13,13 @@
     <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold mb-4">Cliente</h2>
-            <p class="mb-2"><strong>Nome:</strong> {{ os.cliente.nome }}</p>
+            <p class="mb-2"><strong>Nome:</strong> {{ os.get_cliente_nome }}</p>
+            {% if os.cliente %}
             <p class="mb-2"><strong>Telefone:</strong> {{ os.cliente.telefone }}</p>
             {% if os.cliente.email %}<p><strong>Email:</strong> {{ os.cliente.email }}</p>{% endif %}
+            {% else %}
+            <p class="text-sm text-gray-500 italic">Cliente não cadastrado no sistema</p>
+            {% endif %}
         </div>
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold mb-4">Veículo</h2>
