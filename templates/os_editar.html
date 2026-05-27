@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block title %}Editar OS #{{ os.numero }} - Oficina Mecânica{% endblock %}
 {% block content %}
 <div class="mb-8">
@@ -121,21 +122,69 @@
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20">Ações</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Ações</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 {% for servico in servicos %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">{{ servico.descricao }}</td>
-                    <td class="px-6 py-4 text-right font-medium">R$ {{ servico.valor|floatformat:2 }}</td>
-                    <td class="px-6 py-4 text-right">
-                        <form method="post" action="{% url 'servico_deletar' servico.pk %}" class="inline" onsubmit="return confirm('Remover este serviço?');">
-                            {% csrf_token %}
-                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                <i class="fas fa-trash"></i>
+                <tr class="hover:bg-gray-50" id="servico-row-{{ servico.pk }}">
+                    <!-- Célula Descrição -->
+                    <td class="px-6 py-3">
+                        <span id="servico-desc-text-{{ servico.pk }}" class="block">{{ servico.descricao }}</span>
+                        <input type="text" id="servico-desc-input-{{ servico.pk }}"
+                               value="{{ servico.descricao }}"
+                               class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </td>
+                    <!-- Célula Valor -->
+                    <td class="px-6 py-3 text-right font-medium">
+                        <span id="servico-valor-text-{{ servico.pk }}" class="block">R$ {{ servico.valor|floatformat:2 }}</span>
+                        <input type="number" id="servico-valor-input-{{ servico.pk }}"
+                               value="{{ servico.valor|unlocalize }}" step="0.01" min="0"
+                               class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+                    </td>
+                    <!-- Célula Ações -->
+                    <td class="px-6 py-3 text-right">
+                        <!-- Ações modo visualização -->
+                        <div id="servico-view-actions-{{ servico.pk }}" class="flex justify-end items-center gap-3">
+                            <button type="button"
+                                    data-pk="{{ servico.pk }}"
+                                    onclick="editarServico(this.dataset.pk)"
+                                    title="Editar serviço"
+                                    class="text-blue-600 hover:text-blue-900 transition">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
+                            <form method="post" action="{% url 'servico_deletar' servico.pk %}" class="inline"
+                                  onsubmit="return confirm('Remover este serviço?');">
+                                {% csrf_token %}
+                                <button type="submit" title="Excluir serviço"
+                                        class="text-red-600 hover:text-red-900 transition">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <!-- Ações modo edição -->
+                        <div id="servico-edit-actions-{{ servico.pk }}" class="hidden justify-end items-center gap-3">
+                            <form method="post" action="{% url 'servico_editar' servico.pk %}"
+                                  id="servico-form-{{ servico.pk }}">
+                                {% csrf_token %}
+                                <input type="hidden" id="servico-form-desc-{{ servico.pk }}" name="descricao">
+                                <input type="hidden" id="servico-form-valor-{{ servico.pk }}" name="valor">
+                                <button type="button"
+                                        data-pk="{{ servico.pk }}"
+                                        onclick="salvarServico(this.dataset.pk)"
+                                        title="Salvar alterações"
+                                        class="text-green-600 hover:text-green-800 transition font-semibold">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <button type="button"
+                                    data-pk="{{ servico.pk }}"
+                                    onclick="cancelarEdicaoServico(this.dataset.pk)"
+                                    title="Cancelar edição"
+                                    class="text-gray-500 hover:text-gray-700 transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -188,23 +237,81 @@
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qtd</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Valor Unit.</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20">Ações</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Ações</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 {% for produto in produtos %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">{{ produto.descricao }}</td>
-                    <td class="px-6 py-4 text-right">{{ produto.quantidade }}</td>
-                    <td class="px-6 py-4 text-right">R$ {{ produto.valor_unitario|floatformat:2 }}</td>
-                    <td class="px-6 py-4 text-right font-medium">R$ {{ produto.valor_total|floatformat:2 }}</td>
-                    <td class="px-6 py-4 text-right">
-                        <form method="post" action="{% url 'produto_deletar' produto.pk %}" class="inline" onsubmit="return confirm('Remover este produto?');">
-                            {% csrf_token %}
-                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                <i class="fas fa-trash"></i>
+                <tr class="hover:bg-gray-50" id="produto-row-{{ produto.pk }}">
+                    <!-- Célula Descrição -->
+                    <td class="px-6 py-3">
+                        <span id="produto-desc-text-{{ produto.pk }}" class="block">{{ produto.descricao }}</span>
+                        <input type="text" id="produto-desc-input-{{ produto.pk }}"
+                               value="{{ produto.descricao }}"
+                               class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </td>
+                    <!-- Célula Quantidade -->
+                    <td class="px-6 py-3 text-right">
+                        <span id="produto-qtd-text-{{ produto.pk }}" class="block">{{ produto.quantidade }}</span>
+                        <input type="number" id="produto-qtd-input-{{ produto.pk }}"
+                               value="{{ produto.quantidade|unlocalize }}" step="0.01" min="0.01"
+                               class="hidden w-20 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+                    </td>
+                    <!-- Célula Valor Unitário -->
+                    <td class="px-6 py-3 text-right">
+                        <span id="produto-vunit-text-{{ produto.pk }}" class="block">R$ {{ produto.valor_unitario|floatformat:2 }}</span>
+                        <input type="number" id="produto-vunit-input-{{ produto.pk }}"
+                               value="{{ produto.valor_unitario|unlocalize }}" step="0.01" min="0"
+                               class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+                    </td>
+                    <!-- Célula Total -->
+                    <td class="px-6 py-3 text-right font-medium">
+                        <span id="produto-vtotal-text-{{ produto.pk }}">R$ {{ produto.valor_total|floatformat:2 }}</span>
+                    </td>
+                    <!-- Célula Ações -->
+                    <td class="px-6 py-3 text-right">
+                        <!-- Ações modo visualização -->
+                        <div id="produto-view-actions-{{ produto.pk }}" class="flex justify-end items-center gap-3">
+                            <button type="button"
+                                    data-pk="{{ produto.pk }}"
+                                    onclick="editarProduto(this.dataset.pk)"
+                                    title="Editar produto"
+                                    class="text-blue-600 hover:text-blue-900 transition">
+                                <i class="fas fa-edit"></i>
                             </button>
-                        </form>
+                            <form method="post" action="{% url 'produto_deletar' produto.pk %}" class="inline"
+                                  onsubmit="return confirm('Remover este produto?');">
+                                {% csrf_token %}
+                                <button type="submit" title="Excluir produto"
+                                        class="text-red-600 hover:text-red-900 transition">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <!-- Ações modo edição -->
+                        <div id="produto-edit-actions-{{ produto.pk }}" class="hidden justify-end items-center gap-3">
+                            <form method="post" action="{% url 'produto_editar' produto.pk %}"
+                                  id="produto-form-{{ produto.pk }}">
+                                {% csrf_token %}
+                                <input type="hidden" id="produto-form-desc-{{ produto.pk }}" name="descricao">
+                                <input type="hidden" id="produto-form-qtd-{{ produto.pk }}" name="quantidade">
+                                <input type="hidden" id="produto-form-vunit-{{ produto.pk }}" name="valor_unitario">
+                                <button type="button"
+                                        data-pk="{{ produto.pk }}"
+                                        onclick="salvarProduto(this.dataset.pk)"
+                                        title="Salvar alterações"
+                                        class="text-green-600 hover:text-green-800 transition font-semibold">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <button type="button"
+                                    data-pk="{{ produto.pk }}"
+                                    onclick="cancelarEdicaoProduto(this.dataset.pk)"
+                                    title="Cancelar edição"
+                                    class="text-gray-500 hover:text-gray-700 transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -224,4 +331,84 @@
         <p class="text-4xl font-bold">R$ {{ os.valor_total|floatformat:2 }}</p>
     </div>
 </div>
+
+<script>
+/* ── Serviços ── */
+function editarServico(pk) {
+    document.getElementById('servico-desc-text-' + pk).classList.add('hidden');
+    document.getElementById('servico-desc-input-' + pk).classList.remove('hidden');
+    document.getElementById('servico-valor-text-' + pk).classList.add('hidden');
+    document.getElementById('servico-valor-input-' + pk).classList.remove('hidden');
+    document.getElementById('servico-view-actions-' + pk).classList.add('hidden');
+    var editDiv = document.getElementById('servico-edit-actions-' + pk);
+    editDiv.classList.remove('hidden');
+    editDiv.classList.add('flex');
+    document.getElementById('servico-desc-input-' + pk).focus();
+}
+
+function cancelarEdicaoServico(pk) {
+    document.getElementById('servico-desc-text-' + pk).classList.remove('hidden');
+    document.getElementById('servico-desc-input-' + pk).classList.add('hidden');
+    document.getElementById('servico-valor-text-' + pk).classList.remove('hidden');
+    document.getElementById('servico-valor-input-' + pk).classList.add('hidden');
+    var editDiv = document.getElementById('servico-edit-actions-' + pk);
+    editDiv.classList.add('hidden');
+    editDiv.classList.remove('flex');
+    document.getElementById('servico-view-actions-' + pk).classList.remove('hidden');
+}
+
+function salvarServico(pk) {
+    var desc = document.getElementById('servico-desc-input-' + pk).value.trim();
+    var valor = document.getElementById('servico-valor-input-' + pk).value;
+    if (!desc || !valor) {
+        alert('Preencha a descrição e o valor do serviço.');
+        return;
+    }
+    document.getElementById('servico-form-desc-' + pk).value = desc;
+    document.getElementById('servico-form-valor-' + pk).value = valor;
+    document.getElementById('servico-form-' + pk).submit();
+}
+
+/* ── Produtos ── */
+function editarProduto(pk) {
+    document.getElementById('produto-desc-text-' + pk).classList.add('hidden');
+    document.getElementById('produto-desc-input-' + pk).classList.remove('hidden');
+    document.getElementById('produto-qtd-text-' + pk).classList.add('hidden');
+    document.getElementById('produto-qtd-input-' + pk).classList.remove('hidden');
+    document.getElementById('produto-vunit-text-' + pk).classList.add('hidden');
+    document.getElementById('produto-vunit-input-' + pk).classList.remove('hidden');
+    document.getElementById('produto-view-actions-' + pk).classList.add('hidden');
+    var editDiv = document.getElementById('produto-edit-actions-' + pk);
+    editDiv.classList.remove('hidden');
+    editDiv.classList.add('flex');
+    document.getElementById('produto-desc-input-' + pk).focus();
+}
+
+function cancelarEdicaoProduto(pk) {
+    document.getElementById('produto-desc-text-' + pk).classList.remove('hidden');
+    document.getElementById('produto-desc-input-' + pk).classList.add('hidden');
+    document.getElementById('produto-qtd-text-' + pk).classList.remove('hidden');
+    document.getElementById('produto-qtd-input-' + pk).classList.add('hidden');
+    document.getElementById('produto-vunit-text-' + pk).classList.remove('hidden');
+    document.getElementById('produto-vunit-input-' + pk).classList.add('hidden');
+    var editDiv = document.getElementById('produto-edit-actions-' + pk);
+    editDiv.classList.add('hidden');
+    editDiv.classList.remove('flex');
+    document.getElementById('produto-view-actions-' + pk).classList.remove('hidden');
+}
+
+function salvarProduto(pk) {
+    var desc = document.getElementById('produto-desc-input-' + pk).value.trim();
+    var qtd  = document.getElementById('produto-qtd-input-' + pk).value;
+    var vunit = document.getElementById('produto-vunit-input-' + pk).value;
+    if (!desc || !qtd || !vunit) {
+        alert('Preencha todos os campos do produto.');
+        return;
+    }
+    document.getElementById('produto-form-desc-' + pk).value = desc;
+    document.getElementById('produto-form-qtd-' + pk).value = qtd;
+    document.getElementById('produto-form-vunit-' + pk).value = vunit;
+    document.getElementById('produto-form-' + pk).submit();
+}
+</script>
 {% endblock %}

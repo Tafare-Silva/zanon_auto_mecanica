@@ -216,17 +216,41 @@ def servico_adicionar(request, os_pk):
     return render(request, 'servico_form.html', {'form': form, 'os': os})
 
 
+def servico_editar(request, pk):
+    """Editar serviço da OS"""
+    servico = get_object_or_404(ServicoOS, pk=pk)
+    os = servico.ordem_servico
+
+    if request.method == 'POST':
+        descricao = request.POST.get('descricao', '').strip()
+        valor_raw = request.POST.get('valor', '')
+        if not descricao or not valor_raw:
+            messages.error(request, 'Preencha todos os campos do serviço.')
+            return redirect('os_editar', pk=os.pk)
+        try:
+            servico.descricao = descricao
+            servico.valor = Decimal(valor_raw)
+            servico.save()
+            os.valor_total = os.calcular_total()
+            os.save()
+            messages.success(request, 'Serviço atualizado com sucesso!')
+        except (ValueError, TypeError):
+            messages.error(request, 'Erro ao atualizar serviço: valor inválido.')
+
+    return redirect('os_editar', pk=os.pk)
+
+
 def servico_deletar(request, pk):
     """Deletar serviço"""
     servico = get_object_or_404(ServicoOS, pk=pk)
     os = servico.ordem_servico
-    
+
     servico.delete()
-    
+
     # Atualizar valor total da OS
     os.valor_total = os.calcular_total()
     os.save()
-    
+
     messages.success(request, 'Serviço removido com sucesso!')
     return redirect('os_editar', pk=os.pk)
 
@@ -273,17 +297,43 @@ def produto_adicionar(request, os_pk):
     return render(request, 'produto_form.html', {'form': form, 'os': os})
 
 
+def produto_editar(request, pk):
+    """Editar produto da OS"""
+    produto = get_object_or_404(ProdutoOS, pk=pk)
+    os = produto.ordem_servico
+
+    if request.method == 'POST':
+        descricao = request.POST.get('descricao', '').strip()
+        quantidade_raw = request.POST.get('quantidade', '')
+        valor_raw = request.POST.get('valor_unitario', '')
+        if not descricao or not quantidade_raw or not valor_raw:
+            messages.error(request, 'Preencha todos os campos do produto.')
+            return redirect('os_editar', pk=os.pk)
+        try:
+            produto.descricao = descricao
+            produto.quantidade = Decimal(quantidade_raw)
+            produto.valor_unitario = Decimal(valor_raw)
+            produto.save()  # save() já recalcula valor_total
+            os.valor_total = os.calcular_total()
+            os.save()
+            messages.success(request, 'Produto atualizado com sucesso!')
+        except (ValueError, TypeError):
+            messages.error(request, 'Erro ao atualizar produto: valores inválidos.')
+
+    return redirect('os_editar', pk=os.pk)
+
+
 def produto_deletar(request, pk):
     """Deletar produto"""
     produto = get_object_or_404(ProdutoOS, pk=pk)
     os = produto.ordem_servico
-    
+
     produto.delete()
-    
+
     # Atualizar valor total da OS
     os.valor_total = os.calcular_total()
     os.save()
-    
+
     messages.success(request, 'Produto removido com sucesso!')
     return redirect('os_editar', pk=os.pk)
 

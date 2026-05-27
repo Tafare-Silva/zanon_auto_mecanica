@@ -21,10 +21,12 @@ urlpatterns = [
     
     # Serviços
     path('ordens/<int:os_pk>/servico/adicionar/', views.servico_adicionar, name='servico_adicionar'),
+    path('servicos/<int:pk>/editar/', views.servico_editar, name='servico_editar'),
     path('servicos/<int:pk>/deletar/', views.servico_deletar, name='servico_deletar'),
-    
+
     # Produtos
     path('ordens/<int:os_pk>/produto/adicionar/', views.produto_adicionar, name='produto_adicionar'),
+    path('produtos/<int:pk>/editar/', views.produto_editar, name='produto_editar'),
     path('produtos/<int:pk>/deletar/', views.produto_deletar, name='produto_deletar'),
     
     # Crediário
