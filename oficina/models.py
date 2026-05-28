@@ -106,7 +106,6 @@ class OrdemServico(models.Model):
         return total_servicos + total_produtos
 
     def save(self, *args, **kwargs):
-    # Gera número da OS se não existir
         if not self.numero:
             ultimo = OrdemServico.objects.order_by('-id').first()
             if ultimo:
@@ -114,10 +113,10 @@ class OrdemServico(models.Model):
                 self.numero = str(ultimo_numero + 1).zfill(6)
             else:
                 self.numero = '000001'
-        
-        # ✅ CORRIGIDO: Calcula valor_total SEMPRE, não apenas em edições
-        self.valor_total = self.calcular_total()
-        
+
+        if self.pk:
+            self.valor_total = self.calcular_total()
+
         super().save(*args, **kwargs)
 
 
