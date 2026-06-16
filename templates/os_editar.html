@@ -8,7 +8,8 @@
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Editar OS #{{ os.numero }}</h1>
             <p class="text-gray-600">Cliente: {{ os.cliente.nome }}</p>
         </div>
-        <div class="space-x-3">
+        <div class="space-x-3 flex items-center">
+            <span class="text-xs text-gray-400 hidden md:inline">F2 = Salvar OS</span>
             <a href="{% url 'os_imprimir' os.pk %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition inline-block">
                 <i class="fas fa-print mr-2"></i>Imprimir
             </a>
@@ -25,22 +26,22 @@
         <i class="fas fa-info-circle mr-3 text-blue-500"></i>
         Informações da Ordem de Serviço
     </h2>
-    
-    <form method="post" class="space-y-6">
+
+    <form method="post" id="os-edit-form" class="space-y-6">
         {% csrf_token %}
-        
+
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Cliente Cadastrado (opcional)</label>
             {{ form.cliente }}
             <p class="text-xs text-gray-500 mt-1">Selecione um cliente já cadastrado ou deixe vazio</p>
         </div>
-        
+
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">OU Nome do Cliente</label>
             {{ form.cliente_nome }}
             <p class="text-xs text-gray-500 mt-1">Digite o nome se não for um cliente cadastrado</p>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Veículo</label>
@@ -97,18 +98,22 @@
 
     <!-- Formulário Inline para Adicionar Serviço -->
     <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 mb-4">
-        <form method="post" action="{% url 'servico_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
+        <form id="add-servico-form" method="post" action="{% url 'servico_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
             {% csrf_token %}
             <div class="col-span-9">
-                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Serviço</label>
-                <input type="text" name="descricao" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Digite a descrição do serviço..." required>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Serviço <span class="text-gray-400">(Enter para avançar)</span></label>
+                <input type="text" id="add-servico-descricao" name="descricao"
+                       class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                       placeholder="Digite a descrição do serviço..." required autocomplete="off">
             </div>
             <div class="col-span-2">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Valor (R$)</label>
-                <input type="number" name="valor" step="0.01" min="0" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="0,00" required>
+                <input type="number" id="add-servico-valor" name="valor" step="0.01" min="0"
+                       class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                       placeholder="0,00" required>
             </div>
             <div class="col-span-1">
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
+                <button type="submit" id="add-servico-btn" class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
@@ -125,26 +130,22 @@
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Ações</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody id="servicos-tbody" class="divide-y divide-gray-200">
                 {% for servico in servicos %}
                 <tr class="hover:bg-gray-50" id="servico-row-{{ servico.pk }}">
-                    <!-- Célula Descrição -->
                     <td class="px-6 py-3">
                         <span id="servico-desc-text-{{ servico.pk }}" class="block">{{ servico.descricao }}</span>
                         <input type="text" id="servico-desc-input-{{ servico.pk }}"
                                value="{{ servico.descricao }}"
                                class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </td>
-                    <!-- Célula Valor -->
                     <td class="px-6 py-3 text-right font-medium">
                         <span id="servico-valor-text-{{ servico.pk }}" class="block">R$ {{ servico.valor|floatformat:2 }}</span>
                         <input type="number" id="servico-valor-input-{{ servico.pk }}"
                                value="{{ servico.valor|unlocalize }}" step="0.01" min="0"
                                class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
                     </td>
-                    <!-- Célula Ações -->
                     <td class="px-6 py-3 text-right">
-                        <!-- Ações modo visualização -->
                         <div id="servico-view-actions-{{ servico.pk }}" class="flex justify-end items-center gap-3">
                             <button type="button"
                                     data-pk="{{ servico.pk }}"
@@ -162,7 +163,6 @@
                                 </button>
                             </form>
                         </div>
-                        <!-- Ações modo edição -->
                         <div id="servico-edit-actions-{{ servico.pk }}" class="hidden justify-end items-center gap-3">
                             <form method="post" action="{% url 'servico_editar' servico.pk %}"
                                   id="servico-form-{{ servico.pk }}">
@@ -188,7 +188,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
+                <tr id="servicos-empty-row">
                     <td colspan="3" class="px-6 py-4 text-center text-gray-500">Nenhum serviço adicionado</td>
                 </tr>
                 {% endfor %}
@@ -206,22 +206,27 @@
 
     <!-- Formulário Inline para Adicionar Produto -->
     <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-3 mb-4">
-        <form method="post" action="{% url 'produto_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
+        <form id="add-produto-form" method="post" action="{% url 'produto_adicionar' os.pk %}" class="grid grid-cols-12 gap-3 items-end">
             {% csrf_token %}
             <div class="col-span-7">
-                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Produto</label>
-                <input type="text" name="descricao" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Digite a descrição do produto..." required>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Descrição do Produto <span class="text-gray-400">(Enter para avançar)</span></label>
+                <input type="text" id="add-produto-descricao" name="descricao"
+                       class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                       placeholder="Digite a descrição do produto..." required autocomplete="off">
             </div>
             <div class="col-span-2">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Quantidade</label>
-                <input type="number" name="quantidade" step="0.01" min="0.01" value="1" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                <input type="number" id="add-produto-quantidade" name="quantidade" step="0.01" min="0.01" value="1"
+                       class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
             </div>
             <div class="col-span-2">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Valor Unit. (R$)</label>
-                <input type="number" name="valor_unitario" step="0.01" min="0" class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="0,00" required>
+                <input type="number" id="add-produto-valor" name="valor_unitario" step="0.01" min="0"
+                       class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                       placeholder="0,00" required>
             </div>
             <div class="col-span-1">
-                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
+                <button type="submit" id="add-produto-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition text-sm h-9">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
@@ -240,37 +245,31 @@
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Ações</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody id="produtos-tbody" class="divide-y divide-gray-200">
                 {% for produto in produtos %}
                 <tr class="hover:bg-gray-50" id="produto-row-{{ produto.pk }}">
-                    <!-- Célula Descrição -->
                     <td class="px-6 py-3">
                         <span id="produto-desc-text-{{ produto.pk }}" class="block">{{ produto.descricao }}</span>
                         <input type="text" id="produto-desc-input-{{ produto.pk }}"
                                value="{{ produto.descricao }}"
                                class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </td>
-                    <!-- Célula Quantidade -->
                     <td class="px-6 py-3 text-right">
                         <span id="produto-qtd-text-{{ produto.pk }}" class="block">{{ produto.quantidade }}</span>
                         <input type="number" id="produto-qtd-input-{{ produto.pk }}"
                                value="{{ produto.quantidade|unlocalize }}" step="0.01" min="0.01"
                                class="hidden w-20 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
                     </td>
-                    <!-- Célula Valor Unitário -->
                     <td class="px-6 py-3 text-right">
                         <span id="produto-vunit-text-{{ produto.pk }}" class="block">R$ {{ produto.valor_unitario|floatformat:2 }}</span>
                         <input type="number" id="produto-vunit-input-{{ produto.pk }}"
                                value="{{ produto.valor_unitario|unlocalize }}" step="0.01" min="0"
                                class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
                     </td>
-                    <!-- Célula Total -->
                     <td class="px-6 py-3 text-right font-medium">
                         <span id="produto-vtotal-text-{{ produto.pk }}">R$ {{ produto.valor_total|floatformat:2 }}</span>
                     </td>
-                    <!-- Célula Ações -->
                     <td class="px-6 py-3 text-right">
-                        <!-- Ações modo visualização -->
                         <div id="produto-view-actions-{{ produto.pk }}" class="flex justify-end items-center gap-3">
                             <button type="button"
                                     data-pk="{{ produto.pk }}"
@@ -288,7 +287,6 @@
                                 </button>
                             </form>
                         </div>
-                        <!-- Ações modo edição -->
                         <div id="produto-edit-actions-{{ produto.pk }}" class="hidden justify-end items-center gap-3">
                             <form method="post" action="{% url 'produto_editar' produto.pk %}"
                                   id="produto-form-{{ produto.pk }}">
@@ -315,7 +313,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
+                <tr id="produtos-empty-row">
                     <td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum produto adicionado</td>
                 </tr>
                 {% endfor %}
@@ -328,12 +326,313 @@
 <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg shadow-md p-8">
     <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold">Valor Total da OS</h2>
-        <p class="text-4xl font-bold">R$ {{ os.valor_total|floatformat:2 }}</p>
+        <p class="text-4xl font-bold" id="total-os-display">R$ {{ os.valor_total|floatformat:2 }}</p>
     </div>
 </div>
 
+<!-- Botão flutuante Salvar OS (F2) -->
+<button id="btn-salvar-os-flutuante"
+        onclick="document.getElementById('os-edit-form').submit()"
+        title="Salvar OS (F2)"
+        class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full shadow-lg font-semibold transition flex items-center gap-2 z-50">
+    <i class="fas fa-save"></i>
+    <span>Salvar OS</span>
+    <span class="text-xs bg-blue-800 px-2 py-0.5 rounded-full">F2</span>
+</button>
+
 <script>
-/* ── Serviços ── */
+/* ── Configuração de URLs para linhas criadas dinamicamente ── */
+const URL_SERVICO_DELETAR = "{% url 'servico_deletar' 9999 %}".replace('9999', '{pk}');
+const URL_SERVICO_EDITAR  = "{% url 'servico_editar'  9999 %}".replace('9999', '{pk}');
+const URL_PRODUTO_DELETAR = "{% url 'produto_deletar' 9999 %}".replace('9999', '{pk}');
+const URL_PRODUTO_EDITAR  = "{% url 'produto_editar'  9999 %}".replace('9999', '{pk}');
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function formatMoney(value) {
+    const num = parseFloat(value);
+    const parts = num.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return parts.join(',');
+}
+
+/* ── Atalho F2 → Salvar OS ── */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F2') {
+        e.preventDefault();
+        document.getElementById('os-edit-form').submit();
+    }
+});
+
+/* ════════════════════════════════════════
+   SERVIÇOS — navegação Enter + AJAX add
+   ════════════════════════════════════════ */
+const servicoDescInput  = document.getElementById('add-servico-descricao');
+const servicoValorInput = document.getElementById('add-servico-valor');
+const servicoForm       = document.getElementById('add-servico-form');
+
+servicoDescInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        servicoValorInput.focus();
+        servicoValorInput.select();
+    }
+});
+
+servicoValorInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitServicoAjax();
+    }
+});
+
+servicoForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitServicoAjax();
+});
+
+async function submitServicoAjax() {
+    const descricao = servicoDescInput.value.trim();
+    const valor     = servicoValorInput.value.trim();
+
+    if (!descricao) { servicoDescInput.focus(); return; }
+    if (!valor)     { servicoValorInput.focus(); return; }
+
+    const btn = document.getElementById('add-servico-btn');
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(servicoForm.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(servicoForm)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            addServicoRow(result.pk, result.descricao, result.valor);
+            atualizarTotalOS(result.valor_total_os);
+            servicoDescInput.value  = '';
+            servicoValorInput.value = '';
+            servicoDescInput.focus();
+        } else {
+            alert('Erro ao adicionar serviço: ' + (result.error || 'Tente novamente.'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erro ao adicionar serviço. Tente novamente.');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function addServicoRow(pk, descricao, valor) {
+    const tbody    = document.getElementById('servicos-tbody');
+    const emptyRow = document.getElementById('servicos-empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const deletarUrl = URL_SERVICO_DELETAR.replace('{pk}', pk);
+    const editarUrl  = URL_SERVICO_EDITAR.replace('{pk}', pk);
+
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50';
+    tr.id = 'servico-row-' + pk;
+    tr.innerHTML = `
+        <td class="px-6 py-3">
+            <span id="servico-desc-text-${pk}" class="block">${escapeHtml(descricao)}</span>
+            <input type="text" id="servico-desc-input-${pk}" value="${escapeHtml(descricao)}"
+                   class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        </td>
+        <td class="px-6 py-3 text-right font-medium">
+            <span id="servico-valor-text-${pk}" class="block">R$ ${formatMoney(valor)}</span>
+            <input type="number" id="servico-valor-input-${pk}" value="${parseFloat(valor).toFixed(2)}" step="0.01" min="0"
+                   class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+        </td>
+        <td class="px-6 py-3 text-right">
+            <div id="servico-view-actions-${pk}" class="flex justify-end items-center gap-3">
+                <button type="button" data-pk="${pk}" onclick="editarServico(this.dataset.pk)"
+                        title="Editar serviço" class="text-blue-600 hover:text-blue-900 transition">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="${deletarUrl}" class="inline"
+                      onsubmit="return confirm('Remover este serviço?');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                    <button type="submit" title="Excluir serviço" class="text-red-600 hover:text-red-900 transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+            <div id="servico-edit-actions-${pk}" class="hidden justify-end items-center gap-3">
+                <form method="post" action="${editarUrl}" id="servico-form-${pk}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                    <input type="hidden" id="servico-form-desc-${pk}" name="descricao">
+                    <input type="hidden" id="servico-form-valor-${pk}" name="valor">
+                    <button type="button" data-pk="${pk}" onclick="salvarServico(this.dataset.pk)"
+                            title="Salvar alterações" class="text-green-600 hover:text-green-800 transition font-semibold">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
+                <button type="button" data-pk="${pk}" onclick="cancelarEdicaoServico(this.dataset.pk)"
+                        title="Cancelar edição" class="text-gray-500 hover:text-gray-700 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </td>`;
+    tbody.appendChild(tr);
+}
+
+/* ════════════════════════════════════════
+   PRODUTOS — navegação Enter + AJAX add
+   ════════════════════════════════════════ */
+const produtoDescInput  = document.getElementById('add-produto-descricao');
+const produtoQtdInput   = document.getElementById('add-produto-quantidade');
+const produtoValorInput = document.getElementById('add-produto-valor');
+const produtoForm       = document.getElementById('add-produto-form');
+
+produtoDescInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        produtoQtdInput.focus();
+        produtoQtdInput.select();
+    }
+});
+
+produtoQtdInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        produtoValorInput.focus();
+        produtoValorInput.select();
+    }
+});
+
+produtoValorInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitProdutoAjax();
+    }
+});
+
+produtoForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitProdutoAjax();
+});
+
+async function submitProdutoAjax() {
+    const descricao = produtoDescInput.value.trim();
+    const quantidade = produtoQtdInput.value.trim();
+    const valor      = produtoValorInput.value.trim();
+
+    if (!descricao)  { produtoDescInput.focus();  return; }
+    if (!quantidade) { produtoQtdInput.focus();   return; }
+    if (!valor)      { produtoValorInput.focus(); return; }
+
+    const btn = document.getElementById('add-produto-btn');
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(produtoForm.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(produtoForm)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            addProdutoRow(result.pk, result.descricao, result.quantidade, result.valor_unitario, result.valor_total);
+            atualizarTotalOS(result.valor_total_os);
+            produtoDescInput.value  = '';
+            produtoQtdInput.value   = '1';
+            produtoValorInput.value = '';
+            produtoDescInput.focus();
+        } else {
+            alert('Erro ao adicionar produto: ' + (result.error || 'Tente novamente.'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Erro ao adicionar produto. Tente novamente.');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function addProdutoRow(pk, descricao, quantidade, valorUnitario, valorTotal) {
+    const tbody    = document.getElementById('produtos-tbody');
+    const emptyRow = document.getElementById('produtos-empty-row');
+    if (emptyRow) emptyRow.remove();
+
+    const deletarUrl = URL_PRODUTO_DELETAR.replace('{pk}', pk);
+    const editarUrl  = URL_PRODUTO_EDITAR.replace('{pk}', pk);
+
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50';
+    tr.id = 'produto-row-' + pk;
+    tr.innerHTML = `
+        <td class="px-6 py-3">
+            <span id="produto-desc-text-${pk}" class="block">${escapeHtml(descricao)}</span>
+            <input type="text" id="produto-desc-input-${pk}" value="${escapeHtml(descricao)}"
+                   class="hidden w-full px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        </td>
+        <td class="px-6 py-3 text-right">
+            <span id="produto-qtd-text-${pk}" class="block">${quantidade}</span>
+            <input type="number" id="produto-qtd-input-${pk}" value="${parseFloat(quantidade).toFixed(2)}" step="0.01" min="0.01"
+                   class="hidden w-20 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+        </td>
+        <td class="px-6 py-3 text-right">
+            <span id="produto-vunit-text-${pk}" class="block">R$ ${formatMoney(valorUnitario)}</span>
+            <input type="number" id="produto-vunit-input-${pk}" value="${parseFloat(valorUnitario).toFixed(2)}" step="0.01" min="0"
+                   class="hidden w-28 px-2 py-1 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right ml-auto">
+        </td>
+        <td class="px-6 py-3 text-right font-medium">
+            <span id="produto-vtotal-text-${pk}">R$ ${formatMoney(valorTotal)}</span>
+        </td>
+        <td class="px-6 py-3 text-right">
+            <div id="produto-view-actions-${pk}" class="flex justify-end items-center gap-3">
+                <button type="button" data-pk="${pk}" onclick="editarProduto(this.dataset.pk)"
+                        title="Editar produto" class="text-blue-600 hover:text-blue-900 transition">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <form method="post" action="${deletarUrl}" class="inline"
+                      onsubmit="return confirm('Remover este produto?');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                    <button type="submit" title="Excluir produto" class="text-red-600 hover:text-red-900 transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+            <div id="produto-edit-actions-${pk}" class="hidden justify-end items-center gap-3">
+                <form method="post" action="${editarUrl}" id="produto-form-${pk}">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${CSRF_TOKEN}">
+                    <input type="hidden" id="produto-form-desc-${pk}" name="descricao">
+                    <input type="hidden" id="produto-form-qtd-${pk}" name="quantidade">
+                    <input type="hidden" id="produto-form-vunit-${pk}" name="valor_unitario">
+                    <button type="button" data-pk="${pk}" onclick="salvarProduto(this.dataset.pk)"
+                            title="Salvar alterações" class="text-green-600 hover:text-green-800 transition font-semibold">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
+                <button type="button" data-pk="${pk}" onclick="cancelarEdicaoProduto(this.dataset.pk)"
+                        title="Cancelar edição" class="text-gray-500 hover:text-gray-700 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </td>`;
+    tbody.appendChild(tr);
+}
+
+/* ── Atualiza total exibido na página ── */
+function atualizarTotalOS(valor) {
+    const el = document.getElementById('total-os-display');
+    if (el) el.textContent = 'R$ ' + formatMoney(valor);
+}
+
+/* ── Serviços: editar inline ── */
 function editarServico(pk) {
     document.getElementById('servico-desc-text-' + pk).classList.add('hidden');
     document.getElementById('servico-desc-input-' + pk).classList.remove('hidden');
@@ -358,18 +657,15 @@ function cancelarEdicaoServico(pk) {
 }
 
 function salvarServico(pk) {
-    var desc = document.getElementById('servico-desc-input-' + pk).value.trim();
+    var desc  = document.getElementById('servico-desc-input-' + pk).value.trim();
     var valor = document.getElementById('servico-valor-input-' + pk).value;
-    if (!desc || !valor) {
-        alert('Preencha a descrição e o valor do serviço.');
-        return;
-    }
-    document.getElementById('servico-form-desc-' + pk).value = desc;
+    if (!desc || !valor) { alert('Preencha a descrição e o valor do serviço.'); return; }
+    document.getElementById('servico-form-desc-' + pk).value  = desc;
     document.getElementById('servico-form-valor-' + pk).value = valor;
     document.getElementById('servico-form-' + pk).submit();
 }
 
-/* ── Produtos ── */
+/* ── Produtos: editar inline ── */
 function editarProduto(pk) {
     document.getElementById('produto-desc-text-' + pk).classList.add('hidden');
     document.getElementById('produto-desc-input-' + pk).classList.remove('hidden');
@@ -398,15 +694,12 @@ function cancelarEdicaoProduto(pk) {
 }
 
 function salvarProduto(pk) {
-    var desc = document.getElementById('produto-desc-input-' + pk).value.trim();
-    var qtd  = document.getElementById('produto-qtd-input-' + pk).value;
+    var desc  = document.getElementById('produto-desc-input-' + pk).value.trim();
+    var qtd   = document.getElementById('produto-qtd-input-' + pk).value;
     var vunit = document.getElementById('produto-vunit-input-' + pk).value;
-    if (!desc || !qtd || !vunit) {
-        alert('Preencha todos os campos do produto.');
-        return;
-    }
-    document.getElementById('produto-form-desc-' + pk).value = desc;
-    document.getElementById('produto-form-qtd-' + pk).value = qtd;
+    if (!desc || !qtd || !vunit) { alert('Preencha todos os campos do produto.'); return; }
+    document.getElementById('produto-form-desc-' + pk).value  = desc;
+    document.getElementById('produto-form-qtd-' + pk).value   = qtd;
     document.getElementById('produto-form-vunit-' + pk).value = vunit;
     document.getElementById('produto-form-' + pk).submit();
 }

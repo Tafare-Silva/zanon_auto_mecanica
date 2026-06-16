@@ -179,23 +179,35 @@ def os_imprimir(request, pk):
 def servico_adicionar(request, os_pk):
     """Adicionar serviço à OS"""
     os = get_object_or_404(OrdemServico, pk=os_pk)
-    
+
     if request.method == 'POST':
-        # Verificar se os dados vêm do formulário inline
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if 'descricao' in request.POST and 'valor' in request.POST:
             try:
-                ServicoOS.objects.create(
+                servico = ServicoOS.objects.create(
                     ordem_servico=os,
                     descricao=request.POST.get('descricao'),
                     valor=Decimal(request.POST.get('valor'))
                 )
-                # Atualizar valor total da OS
                 os.valor_total = os.calcular_total()
                 os.save()
+
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'pk': servico.pk,
+                        'descricao': servico.descricao,
+                        'valor': str(servico.valor),
+                        'valor_total_os': str(os.valor_total),
+                    })
+
                 messages.success(request, 'Serviço adicionado com sucesso!')
                 return redirect('os_editar', pk=os.pk)
-            except (ValueError, TypeError) as e:
-                messages.error(request, f'Erro ao adicionar serviço: valor inválido')
+            except (ValueError, TypeError):
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Valor inválido'}, status=400)
+                messages.error(request, 'Erro ao adicionar serviço: valor inválido')
                 return redirect('os_editar', pk=os.pk)
         else:
             form = ServicoOSForm(request.POST)
@@ -203,16 +215,23 @@ def servico_adicionar(request, os_pk):
                 servico = form.save(commit=False)
                 servico.ordem_servico = os
                 servico.save()
-                
-                # Atualizar valor total da OS
                 os.valor_total = os.calcular_total()
                 os.save()
-                
+
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'pk': servico.pk,
+                        'descricao': servico.descricao,
+                        'valor': str(servico.valor),
+                        'valor_total_os': str(os.valor_total),
+                    })
+
                 messages.success(request, 'Serviço adicionado com sucesso!')
                 return redirect('os_editar', pk=os.pk)
     else:
         form = ServicoOSForm()
-    
+
     return render(request, 'servico_form.html', {'form': form, 'os': os})
 
 
@@ -259,24 +278,38 @@ def servico_deletar(request, pk):
 def produto_adicionar(request, os_pk):
     """Adicionar produto à OS"""
     os = get_object_or_404(OrdemServico, pk=os_pk)
-    
+
     if request.method == 'POST':
-        # Verificar se os dados vêm do formulário inline
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
         if 'descricao' in request.POST and 'quantidade' in request.POST and 'valor_unitario' in request.POST:
             try:
-                ProdutoOS.objects.create(
+                produto = ProdutoOS.objects.create(
                     ordem_servico=os,
                     descricao=request.POST.get('descricao'),
                     quantidade=Decimal(request.POST.get('quantidade')),
                     valor_unitario=Decimal(request.POST.get('valor_unitario'))
                 )
-                # Atualizar valor total da OS
                 os.valor_total = os.calcular_total()
                 os.save()
+
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'pk': produto.pk,
+                        'descricao': produto.descricao,
+                        'quantidade': str(produto.quantidade),
+                        'valor_unitario': str(produto.valor_unitario),
+                        'valor_total': str(produto.valor_total),
+                        'valor_total_os': str(os.valor_total),
+                    })
+
                 messages.success(request, 'Produto adicionado com sucesso!')
                 return redirect('os_editar', pk=os.pk)
-            except (ValueError, TypeError) as e:
-                messages.error(request, f'Erro ao adicionar produto: valores inválidos')
+            except (ValueError, TypeError):
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': 'Valores inválidos'}, status=400)
+                messages.error(request, 'Erro ao adicionar produto: valores inválidos')
                 return redirect('os_editar', pk=os.pk)
         else:
             form = ProdutoOSForm(request.POST)
@@ -284,16 +317,25 @@ def produto_adicionar(request, os_pk):
                 produto = form.save(commit=False)
                 produto.ordem_servico = os
                 produto.save()
-                
-                # Atualizar valor total da OS
                 os.valor_total = os.calcular_total()
                 os.save()
-                
+
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'pk': produto.pk,
+                        'descricao': produto.descricao,
+                        'quantidade': str(produto.quantidade),
+                        'valor_unitario': str(produto.valor_unitario),
+                        'valor_total': str(produto.valor_total),
+                        'valor_total_os': str(os.valor_total),
+                    })
+
                 messages.success(request, 'Produto adicionado com sucesso!')
                 return redirect('os_editar', pk=os.pk)
     else:
         form = ProdutoOSForm()
-    
+
     return render(request, 'produto_form.html', {'form': form, 'os': os})
 
 
